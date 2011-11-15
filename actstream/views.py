@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
+from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
 from actstream.models import Follow, Action, user_stream, actor_stream, \
@@ -33,30 +34,27 @@ def follow_unfollow(request, content_type_id, object_id, do_follow=True):
     return respond(request, 204) # NO CONTENT
 
 class StreamListView(ListView):
+    """Index page for authenticated user's activity stream. (Eg: Your
+    feed at github.com)
+    """
+
     model = Follow
     template_name = "activity/actor.html"
     context_object_name = "action_list"
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(StreamListView, self).dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return user_stream(self.request.user)
 
     def get_context_data(self, **kwargs):
-        # Call the base implementation first to get a context
         context = super(StreamListView, self).get_context_data(**kwargs)
         context['ctype'] = ContentType.objects.get_for_model(self.request.user)
         context['actor'] = user_stream(self.request.user)
         return context 
-   
-#@login_required
-#def stream(request):
-#    """
-#    Index page for authenticated user's activity stream. (Eg: Your feed at github.com)
-#    """
-#    return render_to_response('activity/actor.html', {
-#        'ctype': ContentType.objects.get_for_model(request.user),
-#        'actor':request.user,'action_list':user_stream(request.user)
-#    }, context_instance=RequestContext(request))
-    
+
 def followers(request, content_type_id, object_id):
     """
     Creates a listing of ``User``s that follow the actor defined by ``content_type_id``, ``object_id``
