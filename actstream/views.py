@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
@@ -32,6 +33,28 @@ def follow_unfollow(request, content_type_id, object_id, do_follow=True):
         return respond(request, 201) # CREATED
     unfollow(request.user, actor)
     return respond(request, 204) # NO CONTENT
+
+class ActionListView(ListView):
+    template_name = 'activity/action_list.html'
+    verb_list = []
+    target_list = []
+    
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = Action.objects.filter(
+            verb__in=self.verb_list)
+        q = Q()
+        for ctype, manager, ckwargs in self.target_list:
+            manager = getattr(ctype.model_class(), manager)
+            q.add(
+                Q(
+                    **{'target_content_type': ctype,
+                       'target_object_id__in': manager.filter(**ckwargs)}),
+                 q.OR)
+        queryset = queryset.filter(q)
+
+        return queryset.order_by('-timestamp')
+
 
 class StreamListView(ListView):
     """Index page for authenticated user's activity stream. (Eg: Your
