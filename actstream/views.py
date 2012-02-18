@@ -8,8 +8,8 @@ from django.db.models import Q
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
-from actstream.models import Follow, Action, user_stream, actor_stream, \
-    model_stream, follow, unfollow
+from actstream.models import Follow, Action, user_stream, actor_stream, model_stream
+from actstream.actions import follow, unfollow
 
 def respond(request, code):
     """
@@ -27,56 +27,24 @@ def follow_unfollow(request, content_type_id, object_id, do_follow=True):
     """
     ctype = get_object_or_404(ContentType, pk=content_type_id)
     actor = get_object_or_404(ctype.model_class(), pk=object_id)
-        
+
     if do_follow:
         follow(request.user, actor)
         return respond(request, 201) # CREATED
     unfollow(request.user, actor)
     return respond(request, 204) # NO CONTENT
 
-class ActionListView(ListView):
-    template_name = 'activity/action_list.html'
-    verb_list = []
-    target_list = []
-    
 
-    def get_queryset(self, *args, **kwargs):
-        queryset = Action.objects.filter(
-            verb__in=self.verb_list)
-        q = Q()
-        for ctype, manager, ckwargs in self.target_list:
-            manager = getattr(ctype.model_class(), manager)
-            q.add(
-                Q(
-                    **{'target_content_type': ctype,
-                       'target_object_id__in': manager.filter(**ckwargs)}),
-                 q.OR)
-        queryset = queryset.filter(q)
-
-        return queryset.order_by('-timestamp')
-
-
-class StreamListView(ListView):
-    """Index page for authenticated user's activity stream. (Eg: Your
-    feed at github.com)
+@login_required
+def stream(request):
     """
+    Index page for authenticated user's activity stream. (Eg: Your feed at github.com)
+    """
+    return render_to_response('activity/actor.html', {
+        'ctype': ContentType.objects.get_for_model(User),
+        'actor': request.user,'action_list':user_stream(request.user)
+    }, context_instance=RequestContext(request))
 
-    model = Follow
-    template_name = "activity/actor.html"
-    context_object_name = "action_list"
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(StreamListView, self).dispatch(request, *args, **kwargs)
-
-    def get_queryset(self):
-        return user_stream(self.request.user)
-
-    def get_context_data(self, **kwargs):
-        context = super(StreamListView, self).get_context_data(**kwargs)
-        context['ctype'] = ContentType.objects.get_for_model(self.request.user)
-        context['actor'] = user_stream(self.request.user)
-        return context 
 
 def followers(request, content_type_id, object_id):
     """
@@ -88,7 +56,7 @@ def followers(request, content_type_id, object_id):
     return render_to_response('activity/followers.html', {
         'followers': (f.user for f in follows), 'actor':actor
     }, context_instance=RequestContext(request))
-    
+
 def user(request, username):
     """
     ``User`` focused activity stream. (Eg: Profile page twitter.com/justquick)
@@ -96,9 +64,9 @@ def user(request, username):
     user = get_object_or_404(User, username=username, is_active=True)
     return render_to_response('activity/actor.html', {
         'ctype': ContentType.objects.get_for_model(User),
-        'actor':user,'action_list':actor_stream(user)
+        'actor': user,'action_list':user_stream(user)
     }, context_instance=RequestContext(request))
-    
+
 def detail(request, action_id):
     """
     ``Action`` detail view (pretty boring, mainly used for get_absolute_url)
@@ -106,17 +74,17 @@ def detail(request, action_id):
     return render_to_response('activity/detail.html', {
         'action': get_object_or_404(Action, pk=action_id)
     }, context_instance=RequestContext(request))
-    
+
 def actor(request, content_type_id, object_id):
     """
     ``Actor`` focused activity stream for actor defined by ``content_type_id``, ``object_id``
     """
     ctype = get_object_or_404(ContentType, pk=content_type_id)
-    actor = get_object_or_404(ctype.model_class(), pk=object_id)    
+    actor = get_object_or_404(ctype.model_class(), pk=object_id)
     return render_to_response('activity/actor.html', {
         'action_list': actor_stream(actor), 'actor':actor,'ctype':ctype
     }, context_instance=RequestContext(request))
-    
+
 def model(request, content_type_id):
     """
     ``Actor`` focused activity stream for actor defined by ``content_type_id``, ``object_id``
@@ -125,4 +93,8 @@ def model(request, content_type_id):
     actor = ctype.model_class()
     return render_to_response('activity/actor.html', {
         'action_list': model_stream(actor),'ctype':ctype,'actor':ctype#._meta.verbose_name_plural.title()
+<<<<<<< HEAD
     }, context_instance=RequestContext(request)) 
+=======
+    }, context_instance=RequestContext(request))
+>>>>>>> cd939aa690a3965a2dc04d6f9cb9ccf2cc10e625
