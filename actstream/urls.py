@@ -1,7 +1,6 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
 from actstream import feeds
-from views import StreamListView
 
 urlpatterns = patterns('actstream.views',
     # Syndication Feeds
@@ -31,8 +30,4 @@ urlpatterns = patterns('actstream.views',
     url(r'^(?P<username>[-\w]+)/$', 'user', name='actstream_user'),
     #url(r'^$', 'stream', name='actstream'),
     
-)
-
-urlpatterns += patterns('',
-    url(r'^$', StreamListView.as_view(paginate_by=2), name='actstream'),
 )
