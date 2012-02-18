@@ -93,8 +93,4 @@ def model(request, content_type_id):
     actor = ctype.model_class()
     return render_to_response('activity/actor.html', {
         'action_list': model_stream(actor),'ctype':ctype,'actor':ctype#._meta.verbose_name_plural.title()
-<<<<<<< HEAD
-    }, context_instance=RequestContext(request)) 
-=======
     }, context_instance=RequestContext(request))
->>>>>>> cd939aa690a3965a2dc04d6f9cb9ccf2cc10e625
