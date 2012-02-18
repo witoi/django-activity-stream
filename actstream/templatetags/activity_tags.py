@@ -10,6 +10,8 @@ register = Library()
 def is_following(context, instance):
     try:
         user = context['user']
+        if not user.is_authenticated():
+            return False
     except KeyError:
         return False
     content_type = ContentType.objects.get_for_model(instance).pk
