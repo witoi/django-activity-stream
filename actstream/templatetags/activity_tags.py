@@ -15,7 +15,7 @@ def is_following(context, instance):
     except KeyError:
         return False
     content_type = ContentType.objects.get_for_model(instance).pk
-    return bool(Follow.objects.filter(content_type_id=content_type, user=user, object_id=instance.pk).count())
+    return bool(Follow.objects.filter(content_type=content_type, user=user, object_id=instance.pk).count())
 
 @register.simple_tag(takes_context=True)
 def activity_follow_label(context, instance, follow, unfollow):
@@ -27,13 +27,13 @@ def activity_follow_label(context, instance, follow, unfollow):
 def activity_follow_url(context, instance):
     content_type = ContentType.objects.get_for_model(instance).pk
     if is_following(context, instance):
-        return reverse('actstream_unfollow', kwargs={'content_type_id': content_type, 'object_id': instance.pk})
-    return reverse('actstream_follow', kwargs={'content_type_id': content_type, 'object_id': instance.pk})
+        return reverse('actstream_unfollow', kwargs={'content_type': content_type, 'object_id': instance.pk})
+    return reverse('actstream_follow', kwargs={'content_type': content_type, 'object_id': instance.pk})
 
 @register.simple_tag
 def activity_followers_url(instance):
     content_type = ContentType.objects.get_for_model(instance).pk
-    return reverse('actstream_followers', kwargs={'content_type_id': content_type, 'object_id': instance.pk})
+    return reverse('actstream_followers', kwargs={'content_type': content_type, 'object_id': instance.pk})
 
 @register.simple_tag
 def activity_followers_count(instance):
