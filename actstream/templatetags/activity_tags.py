@@ -27,13 +27,13 @@ def activity_follow_label(context, instance, follow, unfollow):
 def activity_follow_url(context, instance):
     content_type = ContentType.objects.get_for_model(instance).pk
     if is_following(context, instance):
-        return reverse('actstream_unfollow', kwargs={'content_type': content_type, 'object_id': instance.pk})
-    return reverse('actstream_follow', kwargs={'content_type': content_type, 'object_id': instance.pk})
+        return reverse('actstream_unfollow', kwargs={'content_type_id': content_type, 'object_id': instance.pk})
+    return reverse('actstream_follow', kwargs={'content_type_id': content_type, 'object_id': instance.pk})
 
 @register.simple_tag
 def activity_followers_url(instance):
     content_type = ContentType.objects.get_for_model(instance).pk
-    return reverse('actstream_followers', kwargs={'content_type': content_type, 'object_id': instance.pk})
+    return reverse('actstream_followers', kwargs={'content_type_id': content_type, 'object_id': instance.pk})
 
 @register.simple_tag
 def activity_followers_count(instance):
